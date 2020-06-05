@@ -1,3 +1,4 @@
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -31,12 +32,13 @@ import javax.crypto.spec.SecretKeySpec;
 
 public class Client {
 	
-	//aes
+	//AES
 	private static String iv;
 	private Key keySpec;
 	final static String key = "201620623leeseunghwan";
 	
 	public static void main(String[] args) throws Exception {
+		
 		try {
 				Socket c_socket = new Socket("127.0.0.1", 8888);
 				//rsa 받아서 aes 암호화
@@ -60,10 +62,11 @@ public class Client {
 				SendThread sen_t = new SendThread();
 				sen_t.setSocket(c_socket);
 				sen_t.setKey(AES_key);
-				System.out.println("==========Conversation Start=============");
+				System.out.println("=================Conversation Start==================");
 				rec_t.start();
 				sen_t.start();
-			
+				rec_t.join();
+				sen_t.End();
 		}
 		catch(IOException e) {
 				e.printStackTrace();
@@ -163,7 +166,7 @@ public class Client {
 	static class SendThread extends Thread{
 		private Socket m_Socket;
 		private Key AES_key;
-		
+		int c = 0;
 		public void run() {
 			super.run();
 			try {
@@ -173,21 +176,23 @@ public class Client {
 				SimpleDateFormat form = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 				
 				while(true) {
-					System.out.println("send working");
+		
 					try {
-						origin_message = tmpbuf.readLine();
-						String message = AES_encrypt(origin_message, AES_key.toString());
-					
-						sendWriter.println(message);
-						sendWriter.flush();
-						sendWriter.println(form.format(new Date()));
-						sendWriter.flush();
-					
-						if(origin_message.contentEquals("exit")) {
-							return ;
+						if(c == 0) {
+							origin_message = tmpbuf.readLine();
+							String message = AES_encrypt(origin_message, AES_key.toString());
+							
+							sendWriter.println(message);
+							sendWriter.flush();
+							sendWriter.println(form.format(new Date()));
+							sendWriter.flush();
+							
+							if(origin_message.contentEquals("exit")) return;
 						}
+						if(c == 1) return;
 					} 
 					catch (Exception e) {
+						System.out.println("send error");
 						e.printStackTrace();
 						break;
 					}
@@ -201,6 +206,10 @@ public class Client {
 				System.out.println("send thread io error");
 			}
 			return ;
+		}
+		public void End() {
+			System.out.println("Chatting Process terminated .. Press Enter");
+			c = 1;
 		}
 		public void setSocket(Socket soc) {
 			m_Socket = soc;
@@ -228,7 +237,7 @@ public class Client {
 						String receiveMessage = AES_decrypt(enc_received, AES_key.toString());
 						
 						if(receiveMessage.contentEquals("exit")) {
-							System.out.println("Received Message : "+receiveMessage + " [" +timestamp + "]");
+							System.out.println("\nReceived Message : "+receiveMessage + " [" +timestamp + "]");
 							System.out.println("Encrypted Message : " + enc_received);
 							System.out.println("Connection Closed");
 
@@ -239,9 +248,9 @@ public class Client {
 							break;
 						}
 						else {
-							System.out.println("Received Message : "+receiveMessage + " [" +timestamp + "]");
+							System.out.println("\nReceived Message : "+receiveMessage + " [" +timestamp + "]");
 							System.out.println("Encrypted Message : " + enc_received);
-							System.out.print("Your Message : ");
+							System.out.println();
 						}
 					} 
 					catch (Exception e) {
@@ -254,7 +263,6 @@ public class Client {
 			catch(IOException e) {
 				System.out.println("receive thread IO error");
 			}
-			System.out.println("recv end");
 		}
 		
 		public void setSocket(Socket soc) {
