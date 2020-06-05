@@ -26,6 +26,7 @@ import java.util.HashMap;
 
 public class Server {
 	
+	//RSA
 	static final int RSA_SIZE= 2048;
 	
 	public static void main(String[] args) throws Exception {
@@ -59,9 +60,11 @@ public class Server {
 			sen_t.setSocket(c_socket);
 			sen_t.setKey(AES_key.toString());
 			
-			System.out.println("==========Conversation Start=============");
+			System.out.println("===================Conversation Start=====================");
 			rec_t.start();
 			sen_t.start();
+			rec_t.join();
+			sen_t.End();
 		}
 		catch(IOException e) {
 			e.printStackTrace();
@@ -197,7 +200,7 @@ public class Server {
 	static class SendThread extends Thread{
 		private Socket m_Socket;
 		private String AES_key;
-		
+		int c = 0;
 		public void run() {
 			super.run();
 			try {
@@ -207,20 +210,23 @@ public class Server {
 				String origin_message;
 				
 				while(true) {
-					System.out.println("send working");
+		
 					try {
-						origin_message = tmpbuf.readLine();
-						String message = AES_encrypt(origin_message, AES_key.toString());
-						
-						sendWriter.println(message);
-						sendWriter.flush();
-						sendWriter.println(form.format(new Date()));
-						sendWriter.flush();
-						
-						if(origin_message.contentEquals("exit")) 
-							return ;
+						if(c==0) {
+							origin_message = tmpbuf.readLine();
+							String message = AES_encrypt(origin_message, AES_key.toString());
+							
+							sendWriter.println(message);
+							sendWriter.flush();
+							sendWriter.println(form.format(new Date()));
+							sendWriter.flush();
+							
+							if(origin_message.contentEquals("exit")) return;
+							}
+						if(c==1) return;
 					} 
 					catch (Exception e) {
+						System.out.println("send error");
 						e.printStackTrace();
 						break;
 					}
@@ -228,12 +234,16 @@ public class Server {
 				System.out.println("From send, sendWriter tmpbuf m_socket close");
 				sendWriter.close();
 				tmpbuf.close();
-//				m_Socket.close();
+	//			m_Socket.close();
 			}
 			catch(IOException e) {
 				System.out.println("send thread io error");
 			}
 			return ;
+		}
+		public void End() {
+			System.out.println("Chatting Process terminated .. Press Enter");
+			c = 1;
 		}
 		public void setSocket(Socket soc) {
 			m_Socket = soc;
@@ -262,7 +272,7 @@ public class Server {
 						String receiveMessage = AES_decrypt(enc_received, AES_key.toString());
 						
 						if(receiveMessage.contentEquals("exit")) {
-							System.out.println("Received Message : "+receiveMessage + " [" +timestamp + "]");
+							System.out.println("\nReceived Message : "+receiveMessage + " [" +timestamp + "]");
 							System.out.println("Encrypted Message : " + enc_received);
 							System.out.println("Connection Closed");
 
@@ -273,9 +283,9 @@ public class Server {
 							break;
 						}
 						else {
-							System.out.println("Received Message : "+receiveMessage + " [" +timestamp + "]");
+							System.out.println("\nReceived Message : "+receiveMessage + " [" +timestamp + "]");
 							System.out.println("Encrypted Message : " + enc_received);
-							System.out.print("Your Message : ");
+							System.out.println();
 						}
 					}
 					catch (Exception e) {
@@ -288,7 +298,7 @@ public class Server {
 			catch(IOException e) {
 				System.out.println("receive thread IO error");
 			}
-			System.out.println("recv end");
+
 		}
 		
 		public void setSocket(Socket soc) {
@@ -299,4 +309,6 @@ public class Server {
 		}
 	}
 }
+
+
 
