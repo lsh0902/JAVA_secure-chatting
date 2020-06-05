@@ -37,7 +37,6 @@ public class Client {
 	final static String key = "201620623leeseunghwan";
 	
 	public static void main(String[] args) throws Exception {
-		
 		try {
 				Socket c_socket = new Socket("127.0.0.1", 8888);
 				//rsa 받아서 aes 암호화
